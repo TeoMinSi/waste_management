@@ -14,7 +14,7 @@ with st.sidebar:
 
 col1, col2 = st.columns(2, vertical_alignment="center")
 with col1:
-    st.image("waste-management.svg", width=300)
+    st.image("Waste-management.svg", width=300)
 with col2:
     st.write('''The Trash Management Dashboard is a digital platform designed to empower individuals, businesses, and government to monitor, manage, and reduce their waste effectively. 
          
