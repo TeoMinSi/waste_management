@@ -4,6 +4,8 @@ import numpy as np
 import plotly.express as px
 import datetime 
 from streamlit_pills import pills
+import plotly.graph_objects as go
+import data_generation
 
 
 with st.sidebar:
@@ -20,25 +22,140 @@ with col2:
          
 By tracking trash levels in real-time and calculating waste emissions, the dashboard serves as a vital tool to help organizations work towards carbon-neutral goals.''')
 
-# time_period = st.radio(
-#     "Waste Deposit Time Period",
-#     ["Real-time", "Hourly", "Daily", "Weekly", "Monthly"],
-# )
-
-
-
 df_columns=["DateTime", "Main_Owner", "2nd_Owner","Bin_ID","Load(KG)","Full(Y/N)"]
 df = pd.read_csv('user1.csv', names=df_columns)
 df['DateTime']  = pd.to_datetime(df['DateTime'])
 
-cleaned_df = df.drop(columns=['Main_Owner', '2nd_Owner',"Bin_ID"], axis=1)
-cleaned_df['Labels'] = ['Loaded' if x > 0 else 'Unloaded' for x in cleaned_df['Load(KG)']]
+st.subheader("Current Bin Capacity")
 
-realtime_df = cleaned_df.groupby(pd.Grouper(key='DateTime', axis=0, freq='1min')).last().reset_index()
-hourly_df = realtime_df.groupby(pd.Grouper(key='DateTime', axis=0, freq='60min')).last().reset_index()
-daily_df = realtime_df.groupby(pd.Grouper(key='DateTime', axis=0, freq='24h')).last().reset_index()
-weekly_df = realtime_df.groupby(pd.Grouper(key='DateTime', axis=0, freq='7d')).last().reset_index()
-monthly_df = realtime_df.groupby(pd.Grouper(key='DateTime', axis=0, freq='1m')).last().reset_index()
+#retrieving the latest row in data
+last_row = df.iloc[-1]
+current_load = last_row["Load(KG)"]
+
+#hardcoded max load
+max_load = 150
+
+percent_filled = (current_load / max_load)*100
+
+if current_load > 59.6:
+    st.markdown(
+        """
+        <style>
+        .button_selected{
+            display: inline-block;
+            outline: 0;
+            text-align: center;
+            border: 1px solid #babfc3;
+            padding: 8px;
+            min-height: 36px;
+            min-width: 36px;
+            color: #ffffff;
+            background: #142c1c;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px;
+        }
+
+        .button_unselected{
+            display: inline-block;
+            outline: 0;
+            text-align: center;
+            border: 1px solid #babfc3;
+            padding: 8px;
+            min-height: 36px;
+            min-width: 36px;
+            color: #142c1c;
+            background: #e8f3f5;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px;
+        }    
+                        
+        </style>             
+        <div>
+            <p class='button_selected'>Loaded</p>
+            <p class='button_unselected'>Unloaded</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+        )
+    
+else:
+    st.markdown(
+    """
+    <style>
+    .button_selected{
+        display: inline-block;
+        outline: 0;
+        text-align: center;
+        border: 1px solid #babfc3;
+        padding: 8px;
+        min-height: 36px;
+        min-width: 36px;
+        color: #ffffff;
+        background: #142c1c;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 14px;
+        box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px;
+    }
+
+    .button_unselected{
+        display: inline-block;
+        outline: 0;
+        text-align: center;
+        border: 1px solid #babfc3;
+        padding: 8px;
+        min-height: 36px;
+        min-width: 36px;
+        color: #142c1c;
+        background: #e8f3f5;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 14px;
+        box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 0px 0px;
+    }    
+                    
+    </style>             
+    <div>
+        <p class='button_unselected'>Loaded</p>
+        <p class='button_selected'>Unloaded</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.write(f"Bin Capacity as of {pd.to_datetime(last_row["DateTime"]).floor('S')} is {current_load}kg.")
+fig = go.Figure(go.Indicator(
+    mode = "gauge+number",
+        number = {'suffix':"%"},
+    gauge = {'bar': {'color': "#142c1c"},},
+    value = percent_filled,
+    domain = {'x': [0, 1], 'y': [0, 1]},
+    title = {'text': "Bin Capacity (Percentage)"}))
+    
+
+st.plotly_chart(fig)
+
+
+cleaned_df = df.drop(columns=['Main_Owner', '2nd_Owner',"Full(Y/N)"], axis=1)
+# cleaned_df['Labels'] = ['Loaded' if x > 0 else 'Unloaded' for x in cleaned_df['Load(KG)']]
+
+fake_data_df = data_generation.data_generation()
+fake_data_df['DateTime']  = pd.to_datetime(fake_data_df['DateTime'])
+
+joined_df = pd.concat([fake_data_df, cleaned_df], ignore_index=True, sort=False)
+
+
+realtime_df = joined_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='1min')]).last().reset_index()
+hourly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='60min')]).last().reset_index()
+daily_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='24h')]).last().reset_index()
+weekly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='7d')]).last().reset_index()
+monthly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='1m')]).last().reset_index()
+
+
 
 realtime_df.fillna(method='ffill', inplace=True)
 realtime_df = realtime_df.tail(60)
@@ -56,11 +173,13 @@ monthly_df.fillna(method='ffill', inplace=True)
 monthly_df = monthly_df.tail(24)
 
 
+
+
 #charts
 
 #realtime chart
-realtime_fig = px.line(realtime_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Labels", "Load(KG)"]) 
-realtime_fig.update_traces(mode="lines", line_color='#142c1c')
+realtime_fig = px.line(realtime_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID") 
+realtime_fig.update_traces(mode="lines")
 realtime_fig.update_layout(hovermode="x unified")
 realtime_fig.add_hline(y=100, line_dash="dot",
               annotation_text="outliers", 
@@ -70,8 +189,8 @@ realtime_fig.add_hline(y=100, line_dash="dot",
              )
 #hourly chart
 # hourly_df['DateTime'] = hourly_df['DateTime'].dt.strftime('%d/%m %H')
-hourly_fig = px.line(hourly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Labels", "Load(KG)"])
-hourly_fig.update_traces(mode="lines", line_color='#142c1c')
+hourly_fig = px.line(hourly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
+hourly_fig.update_traces(mode="lines")
 hourly_fig.update_layout(hovermode="x unified")
 hourly_fig.add_hline(y=100, line_dash="dot",
               annotation_text="outliers", 
@@ -82,8 +201,8 @@ hourly_fig.add_hline(y=100, line_dash="dot",
 
 #daily charts
 daily_df['DateTime'] = daily_df['DateTime'].dt.strftime('%d/%m/%y')
-daily_fig = px.line(daily_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Labels", "Load(KG)"])
-daily_fig.update_traces(mode="markers+lines", line_color='#142c1c')
+daily_fig = px.line(daily_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
+daily_fig.update_traces(mode="markers+lines")
 daily_fig.update_layout(hovermode="x unified")
 daily_fig.add_hline(y=100, line_dash="dot",
               annotation_text="outliers", 
@@ -95,8 +214,8 @@ daily_fig.add_hline(y=100, line_dash="dot",
 
 #weekly charts
 weekly_df['DateTime'] = weekly_df['DateTime'].dt.strftime('%d/%m/%y')
-weekly_fig = px.line(weekly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Labels", "Load(KG)"])
-weekly_fig.update_traces(mode="markers+lines", line_color='#142c1c')
+weekly_fig = px.line(weekly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
+weekly_fig.update_traces(mode="markers+lines")
 weekly_fig.update_layout(hovermode="x unified")
 weekly_fig.add_hline(y=100, line_dash="dot",
               annotation_text="outliers", 
@@ -108,9 +227,9 @@ weekly_fig.add_hline(y=100, line_dash="dot",
 
 #monthly charts
 monthly_df['DateTime'] = monthly_df['DateTime'].dt.strftime('%b-%y')
-monthly_fig = px.line(monthly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Labels", "Load(KG)"])
+monthly_fig = px.line(monthly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
 monthly_fig.update_layout(xaxis=dict(tickformat="%b-%Y"), hovermode="x unified")
-monthly_fig.update_traces(mode="markers+lines", line_color='#142c1c')
+monthly_fig.update_traces(mode="markers+lines")
 monthly_fig.add_hline(y=100, line_dash="dot",
               annotation_text="outliers", 
               annotation_position="top right",
@@ -120,52 +239,11 @@ monthly_fig.add_hline(y=100, line_dash="dot",
 
 
 time_period = pills("Select your time period", ["Real-time", "Hourly", "Daily", "Weekly", "Monthly"], index=0)
-
-# realtime, hourly, daily, weekly, monthly = st.columns(5)
-# if realtime.button("Real-time", use_container_width=True):
-#     st.subheader("Real Time Chart")
-#     tab1, tab2 = st.tabs(["Chart", "Data"])
-#     with tab1:
-#         st.plotly_chart(realtime_fig, use_container_width=True)
-#     with tab2:
-#         st.dataframe(realtime_df, use_container_width =True)
-
-# if hourly.button("Hourly", use_container_width=True):
-#     st.subheader("Hourly Time Chart")
-#     tab1, tab2 = st.tabs(["Chart", "Data"])
-#     with tab1:
-#         st.plotly_chart(hourly_fig, use_container_width=True)
-#     with tab2:
-#         st.dataframe(hourly_df, use_container_width =True)
-
-# if daily.button("Daily", use_container_width=True):
-#     st.subheader("Daily Time Chart")
-#     tab1, tab2 = st.tabs(["Chart", "Data"])
-#     with tab1:
-#         st.plotly_chart(daily_fig, use_container_width=True)
-#     with tab2:
-#         st.dataframe(daily_df, use_container_width =True)
-
-# if weekly.button("Weekly", use_container_width=True):
-#     st.subheader("Weekly Time Chart")
-#     tab1, tab2 = st.tabs(["Chart", "Data"])
-#     with tab1:
-#         st.plotly_chart(weekly_fig, use_container_width=True)
-#     with tab2:
-#         st.dataframe(weekly_df, use_container_width =True)
-
-# if monthly.button("Monthly", use_container_width=True):
-#     st.subheader("Monthly Time Chart")
-#     tab1, tab2 = st.tabs(["Chart", "Data"])
-#     with tab1:
-#         st.plotly_chart(monthly_fig, use_container_width=True)
-#     with tab2:
-#         st.dataframe(monthly_df, use_container_width =True)
-
 if time_period == "Real-time":
     st.subheader("Real Time Chart")
     tab1, tab2 = st.tabs(["Chart", "Data"])
     with tab1:
+        st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
         st.plotly_chart(realtime_fig, use_container_width=True)
     with tab2:
         st.dataframe(realtime_df, use_container_width =True)
@@ -175,6 +253,8 @@ elif time_period == "Hourly":
     st.subheader("Hourly Time Chart")
     tab1, tab2 = st.tabs(["Chart", "Data"])
     with tab1:
+        st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+
         st.plotly_chart(hourly_fig, use_container_width=True)
     with tab2:
         st.dataframe(hourly_df, use_container_width =True)
@@ -184,6 +264,8 @@ elif time_period == "Daily":
     st.subheader("Daily Time Chart")
     tab1, tab2 = st.tabs(["Chart", "Data"])
     with tab1:
+        st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+
         st.plotly_chart(daily_fig, use_container_width=True)
     with tab2:
         st.dataframe(daily_df, use_container_width =True)
@@ -193,6 +275,8 @@ elif time_period == "Weekly":
     st.subheader("Weekly Time Chart")
     tab1, tab2 = st.tabs(["Chart", "Data"])
     with tab1:
+        st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+
         st.plotly_chart(weekly_fig, use_container_width=True)
     with tab2:
         st.dataframe(weekly_df, use_container_width =True)
@@ -202,6 +286,8 @@ else:
     st.subheader("Monthly Time Chart")
     tab1, tab2 = st.tabs(["Chart", "Data"])
     with tab1:
+        st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+
         st.plotly_chart(monthly_fig, use_container_width=True)
     with tab2:
         st.dataframe(monthly_df, use_container_width =True)
