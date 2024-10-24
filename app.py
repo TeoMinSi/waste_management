@@ -6,8 +6,38 @@ import datetime
 from streamlit_pills import pills
 import plotly.graph_objects as go
 import data_generation
+import boto3
+from dotenv import load_dotenv
+import os
 
 st.set_page_config(layout="wide")
+
+def configure():
+    load_dotenv()
+
+# uploading fake data to s3
+# fake_data_df = data_generation.data_generation()
+# fake_data_df['DateTime']  = pd.to_datetime(fake_data_df['DateTime'])
+
+# joined_df = pd.concat([fake_data_df, df], ignore_index=True, sort=False)
+# joined_df.to_csv('user2.csv')
+# s3.Bucket('wastesortingbucket').upload_file(Filename='user2.csv',Key='user2.csv')
+# st.write(joined_df)
+
+# df_columns=["DateTime", "Main_Owner", "2nd_Owner","Bin_ID","Load(KG)","Full(Y/N)"]
+# df = pd.read_csv('user1.csv', names=df_columns)
+
+configure()
+
+s3 = boto3.resource(
+    service_name='s3',
+    region_name="ap-southeast-1",
+    aws_access_key_id =os.getenv('aws_access_key_id'),
+    aws_secret_access_key = os.getenv('aws_secret_access_key'),
+)
+
+obj = s3.Bucket('wastesortingbucket').Object("user2.csv").get()
+df = pd.read_csv(obj["Body"])
 
 with st.sidebar:
     st.image("full_logo.png")
@@ -17,20 +47,15 @@ with st.sidebar:
 
 By tracking trash levels in real-time and calculating waste emissions, the dashboard serves as a vital tool to help organizations work towards carbon-neutral goals.''')
 
-df_columns=["DateTime", "Main_Owner", "2nd_Owner","Bin_ID","Load(KG)","Full(Y/N)"]
-df = pd.read_csv('user1.csv', names=df_columns)
-df['DateTime']  = pd.to_datetime(df['DateTime'])
 
+df['DateTime']  = pd.to_datetime(df['DateTime'])
 
 cleaned_df = df.drop(columns=['Main_Owner', '2nd_Owner',"Full(Y/N)"], axis=1)
 # cleaned_df['Labels'] = ['Loaded' if x > 0 else 'Unloaded' for x in cleaned_df['Load(KG)']]
 
-fake_data_df = data_generation.data_generation()
-fake_data_df['DateTime']  = pd.to_datetime(fake_data_df['DateTime'])
 
-joined_df = pd.concat([fake_data_df, cleaned_df], ignore_index=True, sort=False)
 
-realtime_df = joined_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='1min')]).last().reset_index()
+realtime_df = cleaned_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='1min')]).last().reset_index()
 hourly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='60min')]).last().reset_index()
 daily_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='24h')]).last().reset_index()
 weekly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='7d')]).last().reset_index()
