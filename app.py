@@ -27,6 +27,12 @@ def configure():
 # df_columns=["DateTime", "Main_Owner", "2nd_Owner","Bin_ID","Load(KG)","Full(Y/N)"]
 # df = pd.read_csv('user1.csv', names=df_columns)
 
+# df.columns = ["Empty","DateTime", "Main_Owner", "2nd_Owner","Bin_ID","Load(KG)","Full(Y/N)"]
+
+
+# s3.Bucket('wastesortingbucket').upload_file(Filename='user2.csv',Key='user2.csv')
+# st.write(joined_df)
+
 configure()
 
 s3 = boto3.resource(
@@ -35,9 +41,13 @@ s3 = boto3.resource(
     aws_access_key_id =os.getenv('aws_access_key_id'),
     aws_secret_access_key = os.getenv('aws_secret_access_key'),
 )
+# df = pd.read_csv('user2.csv')
+# s3.Bucket('wastesortingbucket').upload_file(Filename='user2.csv',Key='user2.csv')
 
 obj = s3.Bucket('wastesortingbucket').Object("user2.csv").get()
-df = pd.read_csv(obj["Body"])
+df = pd.read_csv(obj["Body"], on_bad_lines='skip')
+
+# st.write(df)
 
 with st.sidebar:
     st.image("full_logo.png")
@@ -50,7 +60,7 @@ By tracking trash levels in real-time and calculating waste emissions, the dashb
 
 df['DateTime']  = pd.to_datetime(df['DateTime'])
 
-cleaned_df = df.drop(columns=['Main_Owner', '2nd_Owner',"Full(Y/N)"], axis=1)
+cleaned_df = df.drop(columns=['Main_Owner', '2nd_Owner',"Full(Y/N)","EmptyCol"], axis=1)
 # cleaned_df['Labels'] = ['Loaded' if x > 0 else 'Unloaded' for x in cleaned_df['Load(KG)']]
 
 
@@ -88,11 +98,12 @@ def bin_labels(row):
     return row
 
 #how to detect when the load is unloaded?
-monthly_df = monthly_df.apply(bin_labels, axis=1)
+new_monthly_df = realtime_df.groupby(["Bin_ID", pd.Grouper(key='DateTime', axis=0, freq='1m')]).sum().reset_index()
 
-monthly_df['ym-date'] = monthly_df['DateTime'].dt.strftime('%B-%Y')
+new_monthly_df = new_monthly_df.apply(bin_labels, axis=1)
 
-fig = px.histogram(monthly_df, x='ym-date', y='Load(KG)',color="Material",barmode='group',title='Breakdown of Recyclables')
+new_monthly_df['ym-date'] = new_monthly_df['DateTime'].dt.strftime('%B-%Y')
+fig = px.histogram(new_monthly_df, x='ym-date', y='Load(KG)',color="Material",barmode='group',title='Breakdown of Recyclables')
 
 #charts
 
@@ -349,6 +360,7 @@ with col2:
 
     st.header("Activity Table")
     realtime_activity = df.groupby(pd.Grouper(key='DateTime', axis=0, freq='1min')).last().reset_index()
+    realtime_activity = realtime_activity.drop(['EmptyCol'], axis=1)
     cleaned_realtime_activity = realtime_activity.dropna(thresh=2)
     # st.write(cleaned_realtime_activity)
     cleaned_realtime_activity['activity'] = cleaned_realtime_activity.apply(activity_string, axis=1)
