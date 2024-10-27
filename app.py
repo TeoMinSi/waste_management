@@ -76,24 +76,24 @@ def realtime_charts(realtime_df):
     realtime_fig = px.line(realtime_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID") 
     realtime_fig.update_traces(mode="lines")
     realtime_fig.update_layout(hovermode="x unified")
-    realtime_fig.add_hline(y=100, line_dash="dot",
-            annotation_text="outliers", 
-            annotation_position="top right",
-            annotation_font_size=15,
-            annotation_font_color="blue"
-            )
+    # realtime_fig.add_hline(y=100, line_dash="dot",
+    #         annotation_text="outliers", 
+    #         annotation_position="top right",
+    #         annotation_font_size=15,
+    #         annotation_font_color="blue"
+    #         )
     return realtime_fig
 
 def hourly_charts(hourly_df):
     hourly_fig = px.line(hourly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
     hourly_fig.update_traces(mode="lines")
     hourly_fig.update_layout(hovermode="x unified")
-    hourly_fig.add_hline(y=100, line_dash="dot",
-            annotation_text="outliers", 
-            annotation_position="top right",
-            annotation_font_size=15,
-            annotation_font_color="blue"
-            )
+    # hourly_fig.add_hline(y=100, line_dash="dot",
+    #         annotation_text="outliers", 
+    #         annotation_position="top right",
+    #         annotation_font_size=15,
+    #         annotation_font_color="blue"
+    #         )
     return hourly_fig
 
 def daily_charts(daily_df):
@@ -101,12 +101,12 @@ def daily_charts(daily_df):
     daily_fig = px.line(daily_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
     daily_fig.update_traces(mode="markers+lines")
     daily_fig.update_layout(hovermode="x unified")
-    daily_fig.add_hline(y=100, line_dash="dot",
-            annotation_text="outliers", 
-            annotation_position="top right",
-            annotation_font_size=15,
-            annotation_font_color="blue"
-            )
+    # daily_fig.add_hline(y=100, line_dash="dot",
+    #         annotation_text="outliers", 
+    #         annotation_position="top right",
+    #         annotation_font_size=15,
+    #         annotation_font_color="blue"
+    #         )
     return daily_fig
 
 def weekly_charts(weekly_df):
@@ -114,12 +114,12 @@ def weekly_charts(weekly_df):
     weekly_fig = px.line(weekly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
     weekly_fig.update_traces(mode="markers+lines")
     weekly_fig.update_layout(hovermode="x unified")
-    weekly_fig.add_hline(y=100, line_dash="dot",
-            annotation_text="outliers", 
-            annotation_position="top right",
-            annotation_font_size=15,
-            annotation_font_color="blue"
-            )
+    # weekly_fig.add_hline(y=100, line_dash="dot",
+    #         annotation_text="outliers", 
+    #         annotation_position="top right",
+    #         annotation_font_size=15,
+    #         annotation_font_color="blue"
+    #         )
     return weekly_fig
 
 def monthly_charts(monthly_df):
@@ -127,12 +127,12 @@ def monthly_charts(monthly_df):
     monthly_fig = px.line(monthly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
     monthly_fig.update_layout(xaxis=dict(tickformat="%b-%Y"), hovermode="x unified")
     monthly_fig.update_traces(mode="markers+lines")
-    monthly_fig.add_hline(y=100, line_dash="dot",
-            annotation_text="outliers", 
-            annotation_position="top right",
-            annotation_font_size=15,
-            annotation_font_color="blue"
-            )
+    # monthly_fig.add_hline(y=100, line_dash="dot",
+    #         annotation_text="outliers", 
+    #         annotation_position="top right",
+    #         annotation_font_size=15,
+    #         annotation_font_color="blue"
+    #         )
     return monthly_fig
 
 def bin_labels(row):
@@ -249,7 +249,7 @@ def gauge_visual(df):
         unsafe_allow_html=True,
     )
 
-    st.write(f"Bin Capacity as of {pd.to_datetime(last_row["DateTime"]).floor('S')} is {current_load}kg.")
+    # st.write(f"Bin Capacity as of {pd.to_datetime(last_row["DateTime"]).floor('S')} is {current_load}kg.")
     gauge_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
             number = {'suffix':"%"},
@@ -298,7 +298,7 @@ with col1:
         realtime_fig = realtime_charts(realtime_df)
         tab1, tab2 = st.tabs(["Chart", "Data"])
         with tab1:
-            st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+            st.write("Bin 1 is for Recyclables while Bin 2 is for Others.")
             st.plotly_chart(realtime_fig, use_container_width=True)
         with tab2:
             st.dataframe(realtime_df, use_container_width =True)
@@ -308,7 +308,7 @@ with col1:
         st.subheader("Hourly Time Chart")
         tab1, tab2 = st.tabs(["Chart", "Data"])
         with tab1:
-            st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+            st.write("Bin 1 is for Recyclables while Bin 2 is for Others.")
             hourly_fig = hourly_charts(hourly_df)
             st.plotly_chart(hourly_fig, use_container_width=True)
         with tab2:
@@ -319,7 +319,7 @@ with col1:
         st.subheader("Daily Time Chart")
         tab1, tab2 = st.tabs(["Chart", "Data"])
         with tab1:
-            st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+            st.write("Bin 1 is for Recyclables while Bin 2 is for Others.")
             daily_fig = daily_charts(daily_df)
             st.plotly_chart(daily_fig, use_container_width=True)
         with tab2:
@@ -330,7 +330,7 @@ with col1:
         st.subheader("Weekly Time Chart")
         tab1, tab2 = st.tabs(["Chart", "Data"])
         with tab1:
-            st.write("Bin 1 is for General Waste while Bin 2 is for Recyclables.")
+            st.write("Bin 1 is for Recyclables while Bin 2 is for Others.")
             weekly_fig = weekly_charts(weekly_df)
             st.plotly_chart(weekly_fig, use_container_width=True)
         with tab2:
