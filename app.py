@@ -9,9 +9,9 @@ import data_generation
 import boto3
 from dotenv import load_dotenv
 import os
-import time
 import datetime
 from streamlit_autorefresh import st_autorefresh
+import pytz
 
 
 st.set_page_config(layout="wide")
@@ -70,7 +70,7 @@ st_autorefresh(interval=30000)
 # The function returns a counter for number of refreshes. This allows the
 # ability to make special requests at different intervals based on the count
 
-st.write(f"The data was last refreshed on {datetime.datetime.now()}.")
+st.write(f"The data was last refreshed on {datetime.datetime.now(pytz.timezone('Asia/Singapore'))}.")
 
 def realtime_charts(realtime_df):
     realtime_fig = px.line(realtime_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID") 

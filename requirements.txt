@@ -66,3 +66,4 @@ watchdog==5.0.3
 wrapt==1.16.0
 yarl==1.16.0
 streamlit_autorefresh
+pytz
