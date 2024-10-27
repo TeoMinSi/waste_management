@@ -85,9 +85,13 @@ def realtime_charts(realtime_df):
     return realtime_fig
 
 def hourly_charts(hourly_df):
-    hourly_fig = px.line(hourly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)"], color="Bin_ID")
+    # hourly_df['DateTime'] = hourly_df['DateTime'].dt.strftime('%H:00')
+    hourly_fig = px.line(hourly_df, x="DateTime", y="Load(KG)", title='Total Waste Load in Bins', hover_data=["Load(KG)","DateTime"], color="Bin_ID")
     hourly_fig.update_traces(mode="lines")
     hourly_fig.update_layout(hovermode="x unified")
+    hourly_fig.update_xaxes(
+     dtick=3_600_000,
+    tickformat="%H:00 <br>%d/%m")
     # hourly_fig.add_hline(y=100, line_dash="dot",
     #         annotation_text="outliers", 
     #         annotation_position="top right",
